@@ -24,7 +24,7 @@ For getting an answer to this question, we need to get a new data frame with the
 
 ```r
 library(ggplot2)
-a <- aggregate(steps ~ date, activities[!is.na(activities["steps"]),], sum)
+a <- aggregate(activities["steps"], by=activities["date"], FUN=sum, na.rm = TRUE)
 ggplot(a, aes(x = steps)) + geom_histogram(binwidth = 1000)
 ```
 
@@ -35,7 +35,7 @@ mean(a$steps, na.rm = TRUE)
 ```
 
 ```
-## [1] 10766.19
+## [1] 9354.23
 ```
 
 ```r
@@ -43,7 +43,7 @@ median(a$steps, na.rm = TRUE)
 ```
 
 ```
-## [1] 10765
+## [1] 10395
 ```
 
 
@@ -53,7 +53,7 @@ Again, for answering this question we need to create a new data frame, this time
 
 
 ```r
-b <- aggregate(steps ~ interval, activities[!is.na(activities["steps"]),], mean)
+b <- aggregate(activities["steps"], by=activities["interval"], FUN=mean, na.rm = TRUE)
 names(b)[2] <- "mean_steps"
 ggplot(b, aes(x = interval, y = mean_steps)) + geom_line()
 ```
@@ -92,7 +92,7 @@ no_nans <- merge(activities, b, by="interval")
 no_nans$steps <- ifelse(is.na(no_nans$steps), round(no_nans$mean_steps), no_nans$steps)
 no_nans$mean_steps <- NULL
 
-c <- aggregate(steps ~ date, no_nans, sum)
+c <- aggregate(no_nans["steps"], by=no_nans["date"], FUN=sum, na.rm = TRUE)
 ggplot(c, aes(x = steps)) + geom_histogram(binwidth = 1000)
 ```
 
@@ -127,9 +127,11 @@ With this data frame, we can generate a plot that answers the question. The plot
 no_nans$date <- as.Date(no_nans$date)
 no_nans$weekpart <- as.factor(ifelse(weekdays(no_nans$date) %in% c("Saturday","Sunday"), "weekend", "weekday"))
 
-d <- aggregate(steps ~ interval, no_nans[no_nans$weekpart == "weekday", ], mean)
+weekpart_df <- no_nans[no_nans$weekpart == "weekday", ]
+d <- aggregate(weekpart_df["steps"], by=weekpart_df["interval"], FUN=mean, na.rm = TRUE)
 d$weekpart <- "weekday"
-e <- aggregate(steps ~ interval, no_nans[no_nans$weekpart == "weekend", ], mean)
+weekend_df <- no_nans[no_nans$weekpart == "weekend", ]
+e <- aggregate(weekend_df["steps"], by=weekend_df["interval"], FUN=mean, na.rm = TRUE)
 e$weekpart <- "weekend"
 f <- merge(d,e, all=TRUE)
 
